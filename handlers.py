@@ -1,0 +1,40 @@
+from telegram import Update
+from telegram.ext import ContextTypes
+from database import add_tire, get_stock
+
+
+async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    tires = get_stock()
+
+    if not tires:
+        await update.message.reply_text("📦 Склад пока пуст.")
+        return
+
+    text = "📦 Склад:\n\n"
+
+    for tire in tires:
+        text += (
+            f"{tire['brand']} {tire['size']} "
+            f"{tire['season']} — {tire['quantity']} шт.\n"
+        )
+
+    await update.message.reply_text(text)
+
+
+async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        brand = context.args[0]
+        size = context.args[1]
+        season = context.args[2]
+        quantity = int(context.args[3])
+
+        add_tire(brand, size, season, quantity)
+
+        await update.message.reply_text(
+            "✅ Шины добавлены на склад!"
+        )
+
+    except:
+        await update.message.reply_text(
+            "Пример:\n/add Michelin 225/45R17 зима 4"
+        )
