@@ -6,14 +6,26 @@ FILE = "stock.json"
 def load_stock():
     try:
         with open(FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+            stock = json.load(f)
+
+            for tire in stock:
+                if "photo" not in tire:
+                    tire["photo"] = None
+
+            return stock
+
     except:
         return []
 
 
 def save_stock(stock):
     with open(FILE, "w", encoding="utf-8") as f:
-        json.dump(stock, f, ensure_ascii=False, indent=4)
+        json.dump(
+            stock,
+            f,
+            ensure_ascii=False,
+            indent=4
+        )
 
 
 def add_tire(brand, size, season, quantity, photo=None):
