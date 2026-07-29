@@ -65,7 +65,7 @@ def main():
     app.add_handler(CommandHandler("stock", stock))
     app.add_handler(CommandHandler("add", add))
     app.add_handler(CommandHandler("remove", remove))
-
+app.add_handler(CommandHandler("find", find))
     app.add_handler(
         CallbackQueryHandler(button_handler)
     )
