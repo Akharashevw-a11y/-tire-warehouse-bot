@@ -1,6 +1,6 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
-from database import add_tire, get_stock, remove_tire
+from database import add_tire, get_stock, remove_tire, find_tires
 
 
 async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
