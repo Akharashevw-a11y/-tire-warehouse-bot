@@ -10,15 +10,18 @@ async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("📦 Склад пока пуст.")
         return
 
-    text = "📦 Склад:\n\n"
+    text = "📦 Склад шин:\n\n"
 
-    for tire in tires:
+    for i, tire in enumerate(tires, start=1):
         text += (
-            f"{tire['brand']} {tire['size']} "
-            f"{tire['season']} — {tire['quantity']} шт.\n"
+            f"{i}. {tire['brand']}\n"
+            f"Размер: {tire['size']}\n"
+            f"Сезон: {tire['season']}\n"
+            f"Количество: {tire['quantity']} шт.\n\n"
         )
 
     await update.message.reply_text(text)
+
 
 
 async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
