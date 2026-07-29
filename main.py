@@ -48,14 +48,66 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def show_stock_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    tires = get_stock()
+
+    if not tires:
+        await update.callback_query.message.reply_text(
+            "📦 Склад пока пуст."
+        )
+        return
+
+    for i, tire in enumerate(tires):
+
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "➕",
+                    callback_data=f"plus_{i}"
+                ),
+                InlineKeyboardButton(
+                    "➖",
+                    callback_data=f"minus_{i}"
+                )
+            ]
+        ]
+
+        text = (
+            f"📦 {tire['brand']}\n"
+            f"Размер: {tire['size']}\n"
+            f"Сезон: {tire['season']}\n"
+            f"Количество: {tire['quantity']} шт."
+        )
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        if tire.get("photo"):
+
+            await update.callback_query.message.reply_photo(
+                photo=tire["photo"],
+                caption=text,
+                reply_markup=reply_markup
+            )
+
+        else:
+
+            await update.callback_query.message.reply_text(
+                text,
+                reply_markup=reply_markup
+            )
+
+
 async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     query = update.callback_query
     await query.answer()
 
+
     if query.data == "menu_stock":
 
-        await stock(update, context)
+        await show_stock_button(update, context)
+
 
     elif query.data == "menu_find":
 
@@ -63,9 +115,11 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "🔍 Для поиска напишите:\n/find Michelin"
         )
 
+
     elif query.data == "menu_add":
 
         if update.effective_user.id != ADMIN_ID:
+
             await query.message.reply_text(
                 "❌ Нет доступа."
             )
@@ -77,9 +131,11 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "/add Michelin 205 зима 4"
         )
 
+
     elif query.data == "menu_remove":
 
         if update.effective_user.id != ADMIN_ID:
+
             await query.message.reply_text(
                 "❌ Нет доступа."
             )
@@ -100,12 +156,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "❌ У вас нет доступа к изменению склада.",
             show_alert=True
         )
-
         return
 
 
     query = update.callback_query
     await query.answer()
+
 
     tires = get_stock()
 
@@ -117,10 +173,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     index = int(index)
 
 
-    if index >= len(tires):
-        return
-
-
     if action == "plus":
 
         tires[index]["quantity"] += 1
@@ -129,7 +181,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif action == "minus":
 
         if tires[index]["quantity"] > 0:
-
             tires[index]["quantity"] -= 1
 
 
@@ -165,8 +216,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
     if tire.get("photo"):
-
-        await query.message.delete()
 
         await query.message.reply_photo(
             photo=tire["photo"],
@@ -207,25 +256,11 @@ def main():
     )
 
 
-    app.add_handler(
-        CommandHandler("start", start)
-    )
-
-    app.add_handler(
-        CommandHandler("stock", stock)
-    )
-
-    app.add_handler(
-        CommandHandler("add", add)
-    )
-
-    app.add_handler(
-        CommandHandler("remove", remove)
-    )
-
-    app.add_handler(
-        CommandHandler("find", find)
-    )
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("stock", stock))
+    app.add_handler(CommandHandler("add", add))
+    app.add_handler(CommandHandler("remove", remove))
+    app.add_handler(CommandHandler("find", find))
 
 
     app.add_handler(
