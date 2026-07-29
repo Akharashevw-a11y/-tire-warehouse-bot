@@ -77,7 +77,6 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
         context.user_data["new_tire"] = {
-
             "brand": brand,
             "size": size,
             "season": season,
@@ -230,9 +229,15 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not tires:
 
-        await update.message.reply_text(
-            "📦 Склад пока пуст."
-        )
+        if update.message:
+            await update.message.reply_text(
+                "📦 Склад пока пуст."
+            )
+        else:
+            await update.callback_query.message.reply_text(
+                "📦 Склад пока пуст."
+            )
+
         return
 
 
@@ -287,4 +292,10 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
-    await update.message.reply_text(text)
+    if update.message:
+
+        await update.message.reply_text(text)
+
+    else:
+
+        await update.callback_query.message.reply_text(text)
