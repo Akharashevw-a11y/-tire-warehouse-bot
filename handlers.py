@@ -1,7 +1,7 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from database import add_tire, get_stock, remove_tire, find_tires
-
+from config import ADMIN_ID
 
 async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
     tires = get_stock()
