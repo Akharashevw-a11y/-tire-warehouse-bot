@@ -4,10 +4,12 @@ from telegram.ext import (
     Application,
     CommandHandler,
     ContextTypes,
-    CallbackQueryHandler
+    CallbackQueryHandler,
+    MessageHandler,
+    filters
 )
 
-from handlers import stock, add, remove, find
+from handlers import stock, add, remove, find, save_photo
 from database import get_stock, save_stock
 from config import ADMIN_ID
 
@@ -79,6 +81,14 @@ def main():
 
     app.add_handler(
         CallbackQueryHandler(button_handler)
+    )
+
+    # Приём фотографий после команды /add
+    app.add_handler(
+        MessageHandler(
+            filters.PHOTO,
+            save_photo
+        )
     )
 
     app.run_polling()
