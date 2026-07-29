@@ -78,3 +78,30 @@ async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "Пример:\n/remove Michelin 205 зима 2"
         )
+async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text(
+            "Пример:\n/find Michelin"
+        )
+        return
+
+    query = " ".join(context.args)
+
+    tires = find_tires(query)
+
+    if not tires:
+        await update.message.reply_text(
+            "❌ Ничего не найдено."
+        )
+        return
+
+    for tire in tires:
+        text = (
+            f"🔍 Найдено:\n\n"
+            f"📦 {tire['brand']}\n"
+            f"Размер: {tire['size']}\n"
+            f"Сезон: {tire['season']}\n"
+            f"Количество: {tire['quantity']} шт."
+        )
+
+        await update.message.reply_text(text)
