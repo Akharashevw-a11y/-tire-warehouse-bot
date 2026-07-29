@@ -3,6 +3,7 @@ from telegram.ext import ContextTypes
 from database import add_tire, get_stock, remove_tire, find_tires
 from config import ADMIN_ID
 
+
 async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
     tires = get_stock()
 
@@ -40,6 +41,13 @@ async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if update.effective_user.id != ADMIN_ID:
+        await update.message.reply_text(
+            "❌ У вас нет доступа."
+        )
+        return
+
     try:
         brand = context.args[0]
         size = context.args[1]
@@ -59,6 +67,13 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if update.effective_user.id != ADMIN_ID:
+        await update.message.reply_text(
+            "❌ У вас нет доступа."
+        )
+        return
+
     try:
         brand = context.args[0]
         size = context.args[1]
@@ -78,7 +93,10 @@ async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "Пример:\n/remove Michelin 205 зима 2"
         )
+
+
 async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
     if not context.args:
         await update.message.reply_text(
             "Пример:\n/find Michelin"
