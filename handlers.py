@@ -12,6 +12,7 @@ async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     for i, tire in enumerate(tires):
+
         keyboard = [
             [
                 InlineKeyboardButton(
@@ -34,10 +35,17 @@ async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Количество: {tire['quantity']} шт."
         )
 
-        await update.message.reply_text(
-            text,
-            reply_markup=reply_markup
-        )
+        if tire.get("photo"):
+            await update.message.reply_photo(
+                photo=tire["photo"],
+                caption=text,
+                reply_markup=reply_markup
+            )
+        else:
+            await update.message.reply_text(
+                text,
+                reply_markup=reply_markup
+            )
 
 
 async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -54,16 +62,48 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
         season = context.args[2]
         quantity = int(context.args[3])
 
-        add_tire(brand, size, season, quantity)
+        context.user_data["new_tire"] = {
+            "brand": brand,
+            "size": size,
+            "season": season,
+            "quantity": quantity
+        }
 
         await update.message.reply_text(
-            "✅ Шины добавлены на склад!"
+            "📸 Теперь отправьте фотографию этой шины."
         )
 
     except:
         await update.message.reply_text(
             "Пример:\n/add Michelin 205 зима 4"
         )
+
+
+async def save_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if update.effective_user.id != ADMIN_ID:
+        return
+
+    if "new_tire" not in context.user_data:
+        return
+
+    photo = update.message.photo[-1].file_id
+
+    tire = context.user_data["new_tire"]
+
+    add_tire(
+        tire["brand"],
+        tire["size"],
+        tire["season"],
+        tire["quantity"],
+        photo
+    )
+
+    del context.user_data["new_tire"]
+
+    await update.message.reply_text(
+        "✅ Шина добавлена вместе с фотографией!"
+    )
 
 
 async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -114,6 +154,7 @@ async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     for tire in tires:
+
         text = (
             f"🔍 Найдено:\n\n"
             f"📦 {tire['brand']}\n"
@@ -122,4 +163,10 @@ async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Количество: {tire['quantity']} шт."
         )
 
-        await update.message.reply_text(text)
+        if tire.get("photo"):
+            await update.message.reply_photo(
+                photo=tire["photo"],
+                caption=text
+            )
+        else:
+            await update.message.reply_text(text)
