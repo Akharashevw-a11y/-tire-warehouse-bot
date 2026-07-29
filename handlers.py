@@ -9,29 +9,16 @@ async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
     tires = get_stock()
 
     if not tires:
-        await update.message.reply_text(
-            "📦 Склад пока пуст."
-        )
+        await update.message.reply_text("📦 Склад пока пуст.")
         return
 
 
     for i, tire in enumerate(tires):
 
-        keyboard = [
-            [
-                InlineKeyboardButton(
-                    "➕",
-                    callback_data=f"plus_{i}"
-                ),
-                InlineKeyboardButton(
-                    "➖",
-                    callback_data=f"minus_{i}"
-                )
-            ]
-        ]
-
-        reply_markup = InlineKeyboardMarkup(keyboard)
-
+        keyboard = [[
+            InlineKeyboardButton("➕", callback_data=f"plus_{i}"),
+            InlineKeyboardButton("➖", callback_data=f"minus_{i}")
+        ]]
 
         text = (
             f"📦 {tire['brand']}\n"
@@ -41,20 +28,16 @@ async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"💰 Цена: {tire.get('price', 0)} руб."
         )
 
-
         if tire.get("photo"):
-
             await update.message.reply_photo(
                 photo=tire["photo"],
                 caption=text,
-                reply_markup=reply_markup
+                reply_markup=InlineKeyboardMarkup(keyboard)
             )
-
         else:
-
             await update.message.reply_text(
                 text,
-                reply_markup=reply_markup
+                reply_markup=InlineKeyboardMarkup(keyboard)
             )
 
 
@@ -62,15 +45,11 @@ async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if update.effective_user.id != ADMIN_ID:
-
-        await update.message.reply_text(
-            "❌ У вас нет доступа."
-        )
+        await update.message.reply_text("❌ У вас нет доступа.")
         return
 
 
     try:
-
         brand = context.args[0]
         size = context.args[1]
         season = context.args[2]
@@ -79,7 +58,6 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
         context.user_data["new_tire"] = {
-
             "brand": brand,
             "size": size,
             "season": season,
@@ -113,7 +91,6 @@ async def save_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     photo = update.message.photo[-1].file_id
 
-
     tire = context.user_data["new_tire"]
 
 
@@ -130,8 +107,18 @@ async def save_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     del context.user_data["new_tire"]
 
 
-    await update.message.reply_text(
-        "✅ Шина добавлена с ценой и фотографией!"
+    text = (
+        f"📦 {tire['brand']}\n"
+        f"Размер: {tire['size']}\n"
+        f"Сезон: {tire['season']}\n"
+        f"Количество: {tire['quantity']} шт.\n"
+        f"💰 Цена: {tire['price']} руб."
+    )
+
+
+    await update.message.reply_photo(
+        photo=photo,
+        caption="✅ Шина добавлена!\n\n" + text
     )
 
 
@@ -139,10 +126,7 @@ async def save_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if update.effective_user.id != ADMIN_ID:
-
-        await update.message.reply_text(
-            "❌ У вас нет доступа."
-        )
+        await update.message.reply_text("❌ У вас нет доступа.")
         return
 
 
@@ -154,12 +138,7 @@ async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
         quantity = int(context.args[3])
 
 
-        if remove_tire(
-            brand,
-            size,
-            season,
-            quantity
-        ):
+        if remove_tire(brand, size, season, quantity):
 
             await update.message.reply_text(
                 "🗑️ Шины удалены со склада!"
@@ -203,7 +182,6 @@ async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-
     for tire in tires:
 
         text = (
@@ -236,11 +214,10 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not tires:
 
-        await update.message.reply_text(
+        await update.effective_message.reply_text(
             "📦 Склад пока пуст."
         )
         return
-
 
 
     total = 0
@@ -257,12 +234,8 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-
-    text = (
+    await update.effective_message.reply_text(
         "📊 Отчёт склада\n\n"
         f"Всего шин: {total} шт.\n"
         f"💰 Стоимость склада: {total_money} руб."
     )
-
-
-    await update.message.reply_text(text)
