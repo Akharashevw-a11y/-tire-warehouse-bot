@@ -23,7 +23,6 @@ async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text)
 
 
-
 async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         brand = context.args[0]
@@ -33,7 +32,9 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         add_tire(brand, size, season, quantity)
 
-        await update.message.reply_text("✅ Шины добавлены на склад!")
+        await update.message.reply_text(
+            "✅ Шины добавлены на склад!"
+        )
 
     except:
         await update.message.reply_text(
@@ -49,9 +50,13 @@ async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
         quantity = int(context.args[3])
 
         if remove_tire(brand, size, season, quantity):
-            await update.message.reply_text("🗑️ Шины удалены со склада!")
+            await update.message.reply_text(
+                "🗑️ Шины удалены со склада!"
+            )
         else:
-            await update.message.reply_text("❌ Такие шины не найдены.")
+            await update.message.reply_text(
+                "❌ Такие шины не найдены."
+            )
 
     except:
         await update.message.reply_text(
