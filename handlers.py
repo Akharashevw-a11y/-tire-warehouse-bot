@@ -1,4 +1,4 @@
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from database import add_tire, get_stock, remove_tire
 
@@ -10,17 +10,33 @@ async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("📦 Склад пока пуст.")
         return
 
-    text = "📦 Склад шин:\n\n"
+    for i, tire in enumerate(tires):
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "➕",
+                    callback_data=f"plus_{i}"
+                ),
+                InlineKeyboardButton(
+                    "➖",
+                    callback_data=f"minus_{i}"
+                )
+            ]
+        ]
 
-    for i, tire in enumerate(tires, start=1):
-        text += (
-            f"{i}. {tire['brand']}\n"
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        text = (
+            f"📦 {tire['brand']}\n"
             f"Размер: {tire['size']}\n"
             f"Сезон: {tire['season']}\n"
-            f"Количество: {tire['quantity']} шт.\n\n"
+            f"Количество: {tire['quantity']} шт."
         )
 
-    await update.message.reply_text(text)
+        await update.message.reply_text(
+            text,
+            reply_markup=reply_markup
+        )
 
 
 async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -38,7 +54,7 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except:
         await update.message.reply_text(
-            "Пример:\n/add Michelin 225/45R17 зима 4"
+            "Пример:\n/add Michelin 205 зима 4"
         )
 
 
@@ -60,5 +76,5 @@ async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except:
         await update.message.reply_text(
-            "Пример:\n/remove Michelin 225/45R17 зима 2"
+            "Пример:\n/remove Michelin 205 зима 2"
         )
