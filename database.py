@@ -39,9 +39,9 @@ def remove_tire(brand, size, season, quantity):
 
     for tire in stock:
         if (
-            tire["brand"] == brand
-            and tire["size"] == size
-            and tire["season"] == season
+            tire["brand"].lower() == brand.lower()
+            and tire["size"].lower() == size.lower()
+            and tire["season"].lower() == season.lower()
         ):
             tire["quantity"] -= quantity
 
@@ -52,3 +52,20 @@ def remove_tire(brand, size, season, quantity):
             return True
 
     return False
+
+
+def find_tires(query):
+    stock = load_stock()
+    result = []
+
+    query = query.lower()
+
+    for tire in stock:
+        if (
+            query in tire["brand"].lower()
+            or query in tire["size"].lower()
+            or query in tire["season"].lower()
+        ):
+            result.append(tire)
+
+    return result
