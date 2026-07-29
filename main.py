@@ -1,5 +1,5 @@
 import os
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -62,12 +62,41 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     tire = tires[index]
 
-    await query.edit_message_text(
+    text = (
         f"📦 {tire['brand']}\n"
         f"Размер: {tire['size']}\n"
         f"Сезон: {tire['season']}\n"
         f"Количество: {tire['quantity']} шт."
     )
+
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                "➕",
+                callback_data=f"plus_{index}"
+            ),
+            InlineKeyboardButton(
+                "➖",
+                callback_data=f"minus_{index}"
+            )
+        ]
+    ]
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    if tire.get("photo"):
+        await query.message.delete()
+
+        await query.message.reply_photo(
+            photo=tire["photo"],
+            caption=text,
+            reply_markup=reply_markup
+        )
+    else:
+        await query.edit_message_text(
+            text,
+            reply_markup=reply_markup
+        )
 
 
 def main():
@@ -83,7 +112,6 @@ def main():
         CallbackQueryHandler(button_handler)
     )
 
-    # Приём фотографий после команды /add
     app.add_handler(
         MessageHandler(
             filters.PHOTO,
