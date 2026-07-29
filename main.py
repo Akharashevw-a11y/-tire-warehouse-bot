@@ -1,6 +1,6 @@
 import os
 from telegram.ext import Application, CommandHandler
-from handlers import stock, add
+from handlers import stock, add, remove
 
 
 TOKEN = os.getenv("TOKEN")
@@ -11,7 +11,8 @@ async def start(update, context):
         "Привет! 👋\n\n"
         "Доступные команды:\n"
         "/stock — показать склад\n"
-        "/add — добавить шины"
+        "/add — добавить шины\n"
+        "/remove — удалить шины"
     )
 
 
@@ -21,6 +22,7 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("stock", stock))
     app.add_handler(CommandHandler("add", add))
+    app.add_handler(CommandHandler("remove", remove))
 
     app.run_polling()
 
