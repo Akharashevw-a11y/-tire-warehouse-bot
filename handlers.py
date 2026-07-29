@@ -37,7 +37,8 @@ async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"📦 {tire['brand']}\n"
             f"Размер: {tire['size']}\n"
             f"Сезон: {tire['season']}\n"
-            f"Количество: {tire['quantity']} шт."
+            f"Количество: {tire['quantity']} шт.\n"
+            f"💰 Цена: {tire.get('price', 0)} руб."
         )
 
 
@@ -74,13 +75,16 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
         size = context.args[1]
         season = context.args[2]
         quantity = int(context.args[3])
+        price = int(context.args[4])
 
 
         context.user_data["new_tire"] = {
+
             "brand": brand,
             "size": size,
             "season": season,
-            "quantity": quantity
+            "quantity": quantity,
+            "price": price
         }
 
 
@@ -92,7 +96,7 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except:
 
         await update.message.reply_text(
-            "Пример:\n/add Michelin 205 зима 4"
+            "Пример:\n/add Michelin 205 зима 4 5000"
         )
 
 
@@ -109,6 +113,7 @@ async def save_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     photo = update.message.photo[-1].file_id
 
+
     tire = context.user_data["new_tire"]
 
 
@@ -117,6 +122,7 @@ async def save_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         tire["size"],
         tire["season"],
         tire["quantity"],
+        tire["price"],
         photo
     )
 
@@ -125,7 +131,7 @@ async def save_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
     await update.message.reply_text(
-        "✅ Шина добавлена вместе с фотографией!"
+        "✅ Шина добавлена с ценой и фотографией!"
     )
 
 
@@ -205,7 +211,8 @@ async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"📦 {tire['brand']}\n"
             f"Размер: {tire['size']}\n"
             f"Сезон: {tire['season']}\n"
-            f"Количество: {tire['quantity']} шт."
+            f"Количество: {tire['quantity']} шт.\n"
+            f"💰 Цена: {tire.get('price', 0)} руб."
         )
 
 
@@ -229,73 +236,33 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not tires:
 
-        if update.message:
-            await update.message.reply_text(
-                "📦 Склад пока пуст."
-            )
-        else:
-            await update.callback_query.message.reply_text(
-                "📦 Склад пока пуст."
-            )
-
+        await update.message.reply_text(
+            "📦 Склад пока пуст."
+        )
         return
 
 
 
     total = 0
-    brands = {}
-    seasons = {}
+    total_money = 0
 
 
     for tire in tires:
 
-        quantity = tire["quantity"]
+        total += tire["quantity"]
 
-        total += quantity
-
-
-        brand = tire["brand"]
-        season = tire["season"]
-
-
-        brands[brand] = brands.get(
-            brand,
-            0
-        ) + quantity
-
-
-        seasons[season] = seasons.get(
-            season,
-            0
-        ) + quantity
+        total_money += (
+            tire["quantity"] *
+            tire.get("price", 0)
+        )
 
 
 
-    text = "📊 Отчёт склада\n\n"
-
-    text += f"Всего шин: {total} шт.\n\n"
-
-
-    text += "🏷 Бренды:\n"
-
-    for brand, count in brands.items():
-
-        text += f"{brand} — {count} шт.\n"
+    text = (
+        "📊 Отчёт склада\n\n"
+        f"Всего шин: {total} шт.\n"
+        f"💰 Стоимость склада: {total_money} руб."
+    )
 
 
-
-    text += "\n🌦 Сезон:\n"
-
-    for season, count in seasons.items():
-
-        text += f"{season} — {count} шт.\n"
-
-
-
-    if update.message:
-
-        await update.message.reply_text(text)
-
-    else:
-
-        await update.callback_query.message.reply_text(text)
+    await update.message.reply_text(text)
