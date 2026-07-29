@@ -1,5 +1,5 @@
 import os
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -18,14 +18,63 @@ TOKEN = os.getenv("TOKEN")
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    keyboard = [
+        [
+            InlineKeyboardButton("📦 Склад", callback_data="menu_stock"),
+            InlineKeyboardButton("🔍 Поиск", callback_data="menu_find")
+        ],
+        [
+            InlineKeyboardButton("➕ Добавить", callback_data="menu_add"),
+            InlineKeyboardButton("🗑 Удалить", callback_data="menu_remove")
+        ]
+    ]
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
     await update.message.reply_text(
         "Привет! 👋\n\n"
-        "Доступные команды:\n"
-        "/stock — показать склад\n"
-        "/find — поиск шин\n"
-        "/add — добавить шины\n"
-        "/remove — удалить шины"
+        "Выберите действие:",
+        reply_markup=reply_markup
     )
+
+
+async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == "menu_stock":
+        await stock(update, context)
+
+    elif query.data == "menu_find":
+        await query.message.reply_text(
+            "Введите поиск:\n/find Michelin"
+        )
+
+    elif query.data == "menu_add":
+
+        if update.effective_user.id != ADMIN_ID:
+            await query.message.reply_text(
+                "❌ Нет доступа."
+            )
+            return
+
+        await query.message.reply_text(
+            "Пример добавления:\n/add Michelin 205 зима 4"
+        )
+
+    elif query.data == "menu_remove":
+
+        if update.effective_user.id != ADMIN_ID:
+            await query.message.reply_text(
+                "❌ Нет доступа."
+            )
+            return
+
+        await query.message.reply_text(
+            "Пример удаления:\n/remove Michelin 205 зима 2"
+        )
 
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -99,8 +148,22 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+async def set_menu(app):
+
+    commands = [
+        BotCommand("start", "Открыть меню"),
+        BotCommand("stock", "Показать склад"),
+        BotCommand("find", "Поиск шин"),
+        BotCommand("add", "Добавить шины"),
+        BotCommand("remove", "Удалить шины")
+    ]
+
+    await app.bot.set_my_commands(commands)
+
+
 def main():
-    app = Application.builder().token(TOKEN).build()
+
+    app = Application.builder().token(TOKEN).post_init(set_menu).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("stock", stock))
@@ -109,7 +172,11 @@ def main():
     app.add_handler(CommandHandler("find", find))
 
     app.add_handler(
-        CallbackQueryHandler(button_handler)
+        CallbackQueryHandler(menu_handler, pattern="^menu_")
+    )
+
+    app.add_handler(
+        CallbackQueryHandler(button_handler, pattern="^(plus|minus)_")
     )
 
     app.add_handler(
