@@ -7,7 +7,7 @@ from telegram.ext import (
     CallbackQueryHandler
 )
 
-from handlers import stock, add, remove
+from handlers import stock, add, remove, find
 from database import get_stock, save_stock
 
 
