@@ -16,14 +16,15 @@ def save_stock(stock):
         json.dump(stock, f, ensure_ascii=False, indent=4)
 
 
-def add_tire(brand, size, season, quantity):
+def add_tire(brand, size, season, quantity, photo=None):
     stock = load_stock()
 
     stock.append({
         "brand": brand,
         "size": size,
         "season": season,
-        "quantity": quantity
+        "quantity": quantity,
+        "photo": photo
     })
 
     save_stock(stock)
