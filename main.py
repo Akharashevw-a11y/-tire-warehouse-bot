@@ -9,7 +9,7 @@ from telegram.ext import (
     filters
 )
 
-from handlers import stock, add, remove, find, save_photo
+from handlers import stock, add, remove, find, save_photo, report
 from database import get_stock, save_stock
 from config import ADMIN_ID
 
@@ -39,8 +39,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "🗑 Удалить",
                 callback_data="menu_remove"
             )
+        ],
+        [
+            InlineKeyboardButton(
+                "📊 Отчёт",
+                callback_data="menu_report"
+            )
         ]
     ]
+
 
     await update.message.reply_text(
         "Привет! 👋\n\nВыберите действие:",
@@ -48,15 +55,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+
 async def show_stock_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     tires = get_stock()
 
+
     if not tires:
+
         await update.callback_query.message.reply_text(
             "📦 Склад пока пуст."
         )
         return
+
+
 
     for i, tire in enumerate(tires):
 
@@ -73,6 +85,7 @@ async def show_stock_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
         ]
 
+
         text = (
             f"📦 {tire['brand']}\n"
             f"Размер: {tire['size']}\n"
@@ -80,7 +93,9 @@ async def show_stock_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Количество: {tire['quantity']} шт."
         )
 
+
         reply_markup = InlineKeyboardMarkup(keyboard)
+
 
         if tire.get("photo"):
 
@@ -98,10 +113,12 @@ async def show_stock_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
 
+
 async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     query = update.callback_query
     await query.answer()
+
 
 
     if query.data == "menu_stock":
@@ -109,11 +126,19 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await show_stock_button(update, context)
 
 
+
     elif query.data == "menu_find":
 
         await query.message.reply_text(
             "🔍 Для поиска напишите:\n/find Michelin"
         )
+
+
+
+    elif query.data == "menu_report":
+
+        await report(update, context)
+
 
 
     elif query.data == "menu_add":
@@ -125,11 +150,13 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
 
+
         await query.message.reply_text(
             "➕ Добавление шин:\n\n"
             "Пример:\n"
             "/add Michelin 205 зима 4"
         )
+
 
 
     elif query.data == "menu_remove":
@@ -141,11 +168,13 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
 
+
         await query.message.reply_text(
             "🗑 Удаление шин:\n\n"
             "Пример:\n"
             "/remove Michelin 205 зима 2"
         )
+
 
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -159,18 +188,23 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
+
     query = update.callback_query
     await query.answer()
 
 
     tires = get_stock()
 
+
     if not tires:
         return
 
 
+
     action, index = query.data.split("_")
+
     index = int(index)
+
 
 
     if action == "plus":
@@ -178,10 +212,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         tires[index]["quantity"] += 1
 
 
+
     elif action == "minus":
 
         if tires[index]["quantity"] > 0:
+
             tires[index]["quantity"] -= 1
+
 
 
     save_stock(tires)
@@ -198,6 +235,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+
     keyboard = [
         [
             InlineKeyboardButton(
@@ -212,7 +250,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
 
+
     reply_markup = InlineKeyboardMarkup(keyboard)
+
 
 
     if tire.get("photo"):
@@ -231,6 +271,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+
 async def set_menu(app):
 
     commands = [
@@ -238,8 +279,10 @@ async def set_menu(app):
         BotCommand("stock", "Склад"),
         BotCommand("find", "Поиск"),
         BotCommand("add", "Добавить"),
-        BotCommand("remove", "Удалить")
+        BotCommand("remove", "Удалить"),
+        BotCommand("report", "Отчёт")
     ]
+
 
     await app.bot.set_my_commands(commands)
 
@@ -256,11 +299,29 @@ def main():
     )
 
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("stock", stock))
-    app.add_handler(CommandHandler("add", add))
-    app.add_handler(CommandHandler("remove", remove))
-    app.add_handler(CommandHandler("find", find))
+    app.add_handler(
+        CommandHandler("start", start)
+    )
+
+    app.add_handler(
+        CommandHandler("stock", stock)
+    )
+
+    app.add_handler(
+        CommandHandler("add", add)
+    )
+
+    app.add_handler(
+        CommandHandler("remove", remove)
+    )
+
+    app.add_handler(
+        CommandHandler("find", find)
+    )
+
+    app.add_handler(
+        CommandHandler("report", report)
+    )
 
 
     app.add_handler(
