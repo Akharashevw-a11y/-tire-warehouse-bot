@@ -9,6 +9,7 @@ from telegram.ext import (
 
 from handlers import stock, add, remove, find
 from database import get_stock, save_stock
+from config import ADMIN_ID
 
 
 TOKEN = os.getenv("TOKEN")
@@ -19,12 +20,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Привет! 👋\n\n"
         "Доступные команды:\n"
         "/stock — показать склад\n"
+        "/find — поиск шин\n"
         "/add — добавить шины\n"
         "/remove — удалить шины"
     )
 
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if update.effective_user.id != ADMIN_ID:
+        await update.callback_query.answer(
+            "❌ У вас нет доступа к изменению склада.",
+            show_alert=True
+        )
+        return
+
     query = update.callback_query
     await query.answer()
 
@@ -66,6 +76,7 @@ def main():
     app.add_handler(CommandHandler("add", add))
     app.add_handler(CommandHandler("remove", remove))
     app.add_handler(CommandHandler("find", find))
+
     app.add_handler(
         CallbackQueryHandler(button_handler)
     )
