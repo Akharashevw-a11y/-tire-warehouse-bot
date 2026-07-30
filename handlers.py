@@ -99,7 +99,7 @@ async def save_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption=(
             "✅ Шина добавлена!\n\n"
             f"📦 {tire['brand']}\n"
-            f"📏 {tire['size']}\n"
+            f"📏 Размер: {tire['size']}\n"
             f"🛞 {tire['type']}\n"
             f"📦 {tire['quantity']} шт.\n"
             f"💰 {tire['price']} руб."
@@ -110,6 +110,7 @@ async def save_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if update.effective_user.id != ADMIN_ID:
+        await update.message.reply_text("❌ Нет доступа.")
         return
 
     try:
@@ -171,25 +172,30 @@ async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(text)
 
 
+
 async def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     tires = get_stock()
 
     if not tires:
-        await update.message.reply_text(
-            "📦 Склад пуст."
+        text = "📦 Склад пока пуст."
+
+    else:
+        total = 0
+        money = 0
+
+        for tire in tires:
+            total += tire["quantity"]
+            money += tire["quantity"] * tire.get("price", 0)
+
+        text = (
+            "📊 Отчёт склада\n\n"
+            f"Всего шин: {total} шт.\n"
+            f"💰 Стоимость склада: {money} руб."
         )
-        return
 
-    total = 0
-    money = 0
 
-    for tire in tires:
-        total += tire["quantity"]
-        money += tire["quantity"] * tire.get("price",0)
-
-    await update.message.reply_text(
-        "📊 Отчёт склада\n\n"
-        f"Всего шин: {total} шт.\n"
-        f"💰 Стоимость: {money} руб."
-    )
+    if update.callback_query:
+        await update.callback_query.message.reply_text(text)
+    else:
+        await update.message.reply_text(text)
