@@ -75,9 +75,7 @@ def main():
     # Кнопки + и -
     app.add_handler(
         CallbackQueryHandler(button_handler)
-    )
-
-        # Быстрый поиск
+    # Быстрый поиск
     app.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,
