@@ -77,22 +77,22 @@ def main():
         CallbackQueryHandler(button_handler)
     )
 
-# Быстрый поиск
-app.add_handler(
-    MessageHandler(
-        filters.TEXT & ~filters.COMMAND,
-        quick_search_handler
+        # Быстрый поиск
+    app.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            quick_search_handler
+        )
     )
-)
 
 
-# Главное меню
-app.add_handler(
-    MessageHandler(
-        filters.TEXT & ~filters.COMMAND,
-        menu_handler
+    # Главное меню
+    app.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            menu_handler
+        )
     )
-)
 
 
     print("✅ Бот запущен")
