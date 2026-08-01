@@ -544,9 +544,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             callback_data=f"minus_{index}"
         )
     ]]
-
-
-    await query.edit_message_caption(
-        caption=text,
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
+    if tire.get("photo"):
+        await query.edit_message_caption(
+            caption=text,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+    else:
+        await query.edit_message_text(
+            text=text,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
