@@ -83,17 +83,7 @@ def main():
     )
 
 
-    # Сначала быстрый поиск
-
-    app.add_handler(
-        MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            quick_search_handler
-        )
-    )
-
-
-    # Потом главное меню
+    # Главное меню
 
     app.add_handler(
         MessageHandler(
@@ -103,10 +93,19 @@ def main():
     )
 
 
+    # Быстрый поиск
+
+    app.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            quick_search_handler
+        )
+    )
+
+
     print("✅ Бот запущен")
 
     app.run_polling()
-
 
 
 if __name__ == "__main__":
