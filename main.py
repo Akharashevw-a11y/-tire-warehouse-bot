@@ -1,6 +1,7 @@
 import os
 
 from telegram import Update, ReplyKeyboardMarkup
+
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -17,13 +18,13 @@ from handlers import (
     remove,
     find,
     report,
-    quick_search_handler,
     button_handler,
     menu_handler
 )
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
     keyboard = [
         ["📦 Склад", "🔍 Поиск"],
         ["➕ Добавить", "🗑 Удалить"],
@@ -43,15 +44,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def main():
+
     token = os.getenv("TOKEN")
 
     if not token:
         print("❌ TOKEN не найден")
         return
 
+
     app = Application.builder().token(token).build()
 
+
     # Команды
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("stock", stock))
     app.add_handler(CommandHandler("add", add))
@@ -59,7 +64,9 @@ def main():
     app.add_handler(CommandHandler("find", find))
     app.add_handler(CommandHandler("report", report))
 
-    # Фото
+
+    # Сохранение фото
+
     app.add_handler(
         MessageHandler(
             filters.PHOTO,
@@ -67,12 +74,17 @@ def main():
         )
     )
 
-    # Кнопки плюс и минус
+
+    # Кнопки + -
+
     app.add_handler(
         CallbackQueryHandler(button_handler)
     )
 
-    # Главное меню
+
+    # Все кнопки меню и быстрый поиск
+    # обрабатываются в одном месте
+
     app.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,
@@ -80,15 +92,9 @@ def main():
         )
     )
 
-    # Быстрый поиск
-    app.add_handler(
-        MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            quick_search_handler
-        )
-    )
 
     print("✅ Бот запущен")
+
 
     app.run_polling()
 
