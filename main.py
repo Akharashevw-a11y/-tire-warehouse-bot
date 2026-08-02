@@ -1,7 +1,6 @@
 import os
 
 from telegram import Update, ReplyKeyboardMarkup
-
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -25,7 +24,6 @@ from handlers import (
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     keyboard = [
         ["📦 Склад", "🔍 Поиск"],
         ["➕ Добавить", "🗑 Удалить"],
@@ -45,17 +43,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def main():
-
     token = os.getenv("TOKEN")
 
     if not token:
         print("❌ TOKEN не найден")
         return
 
-
     app = Application.builder().token(token).build()
-        # Команды
 
+    # Команды
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("stock", stock))
     app.add_handler(CommandHandler("add", add))
@@ -63,9 +59,7 @@ def main():
     app.add_handler(CommandHandler("find", find))
     app.add_handler(CommandHandler("report", report))
 
-
     # Фото
-
     app.add_handler(
         MessageHandler(
             filters.PHOTO,
@@ -73,16 +67,12 @@ def main():
         )
     )
 
-
-    # Кнопки плюс и минус
-
+    # Кнопки + и -
     app.add_handler(
         CallbackQueryHandler(button_handler)
     )
 
-
     # Главное меню
-
     app.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,
@@ -90,16 +80,15 @@ def main():
         )
     )
 
-
     # Быстрый поиск
-
     app.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,
             quick_search_handler
         )
     )
-        print("✅ Бот запущен")
+
+    print("✅ Бот запущен")
 
     app.run_polling()
 
