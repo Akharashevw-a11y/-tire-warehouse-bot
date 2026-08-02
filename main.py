@@ -67,7 +67,7 @@ def main():
         )
     )
 
-    # Кнопки + и -
+    # Кнопки плюс и минус
     app.add_handler(
         CallbackQueryHandler(button_handler)
     )
