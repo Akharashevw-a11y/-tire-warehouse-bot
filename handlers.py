@@ -410,3 +410,145 @@ async def quick_search_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         )
 
         return
+    types = [
+        "🚛 Рулевая",
+        "⚙️ Ведущая",
+        "🛞 Прицепная",
+        "⛏ Карьерная",
+        "🌍 Универсальная"
+    ]
+
+
+    if text in types:
+
+        tire_size = context.user_data.get("search_size")
+
+
+        if not tire_size:
+            await update.message.reply_text(
+                "Сначала выберите размер."
+            )
+            return
+
+
+        tires = get_stock()
+
+        result = []
+
+
+        for tire in tires:
+
+            if (
+                normalize_size(tire.get("size","")) == tire_size
+                and tire.get("type","").lower() == text.lower().replace("🚛 ","").replace("⚙️ ","").replace("🛞 ","").replace("⛏ ","").replace("🌍 ","")
+            ):
+                result.append(tire)
+
+
+        if not result:
+
+            await update.message.reply_text(
+                "❌ Такой резины нет на складе."
+            )
+            return
+
+
+        for tire in result:
+
+            message = (
+                f"🔍 Найдено:\n\n"
+                f"📦 {tire['brand']}\n"
+                f"📏 Размер: {tire['size']}\n"
+                f"🛞 Тип: {tire.get('type','')}\n"
+                f"📦 Количество: {tire.get('quantity',0)} шт.\n"
+                f"💰 Цена: {tire.get('price',0)} руб."
+            )
+
+
+            if tire.get("photo"):
+
+                await update.message.reply_photo(
+                    photo=tire["photo"],
+                    caption=message
+                )
+
+            else:
+
+                await update.message.reply_text(message)
+
+
+
+# =========================
+# КНОПКИ + И -
+# =========================
+
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    query = update.callback_query
+
+    await query.answer()
+
+
+    tires = get_stock()
+
+
+    action, index = query.data.split("_")
+
+    index = int(index)
+
+
+    if index >= len(tires):
+        return
+
+
+    if action == "plus":
+
+        tires[index]["quantity"] += 1
+
+
+    elif action == "minus":
+
+        if tires[index]["quantity"] > 0:
+            tires[index]["quantity"] -= 1
+
+
+    save_stock(tires)
+
+
+    tire = tires[index]
+
+
+    text = (
+        f"📦 {tire['brand']}\n"
+        f"📏 Размер: {tire['size']}\n"
+        f"🛞 Тип: {tire.get('type','')}\n"
+        f"📦 Количество: {tire.get('quantity',0)} шт.\n"
+        f"💰 Цена: {tire.get('price',0)} руб."
+    )
+
+
+    keyboard = [[
+        InlineKeyboardButton(
+            "➕",
+            callback_data=f"plus_{index}"
+        ),
+        InlineKeyboardButton(
+            "➖",
+            callback_data=f"minus_{index}"
+        )
+    ]]
+
+
+    if tire.get("photo"):
+
+        await query.edit_message_caption(
+            caption=text,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+    else:
+
+        await query.edit_message_text(
+            text=text,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
