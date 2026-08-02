@@ -54,9 +54,7 @@ def main():
 
 
     app = Application.builder().token(token).build()
-
-
-    # Команды
+        # Команды
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("stock", stock))
@@ -101,9 +99,7 @@ def main():
             quick_search_handler
         )
     )
-
-
-    print("✅ Бот запущен")
+        print("✅ Бот запущен")
 
     app.run_polling()
 
