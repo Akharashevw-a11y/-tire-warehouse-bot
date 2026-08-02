@@ -83,24 +83,24 @@ def main():
     )
 
 
-# Быстрый поиск
+    # Главное меню
 
-app.add_handler(
-    MessageHandler(
-        filters.TEXT & ~filters.COMMAND,
-        quick_search_handler
+    app.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            menu_handler
+        )
     )
-)
 
 
-# Главное меню
+    # Быстрый поиск
 
-app.add_handler(
-    MessageHandler(
-        filters.TEXT & ~filters.COMMAND,
-        menu_handler
+    app.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            quick_search_handler
+        )
     )
-)
 
 
     print("✅ Бот запущен")
