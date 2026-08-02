@@ -18,16 +18,22 @@ from database import (
 from config import ADMIN_ID
 
 
-# =========================
-# НОРМАЛИЗАЦИЯ РАЗМЕРА
-# =========================
-
 def normalize_size(text):
     return (
-        text
-        .lower()
+        text.lower()
         .replace(" ", "")
-        .replace("r", "r")
+    )
+
+
+def clean_type(text):
+    return (
+        text
+        .replace("🚛 ", "")
+        .replace("⚙️ ", "")
+        .replace("🛞 ", "")
+        .replace("⛏ ", "")
+        .replace("🌍 ", "")
+        .lower()
     )
 
 
@@ -45,7 +51,6 @@ async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-
     for i, tire in enumerate(tires):
 
         text = (
@@ -55,7 +60,6 @@ async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"📦 Количество: {tire.get('quantity',0)} шт.\n"
             f"💰 Цена: {tire.get('price',0)} руб."
         )
-
 
         keyboard = [[
             InlineKeyboardButton(
@@ -68,9 +72,7 @@ async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         ]]
 
-
         markup = InlineKeyboardMarkup(keyboard)
-
 
         if tire.get("photo"):
 
@@ -100,7 +102,6 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-
     try:
 
         brand = context.args[0]
@@ -108,7 +109,6 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
         tire_type = context.args[2]
         quantity = int(context.args[3])
         price = int(context.args[4])
-
 
         context.user_data["new_tire"] = {
             "brand": brand,
@@ -118,11 +118,9 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "price": price
         }
 
-
         await update.message.reply_text(
             "📸 Теперь отправьте фото шины."
         )
-
 
     except:
 
@@ -130,6 +128,8 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Пример:\n"
             "/add Michelin 315/80R22.5 Рулевая 4 28000"
         )
+
+
 # =========================
 # СОХРАНЕНИЕ ФОТО
 # =========================
@@ -139,16 +139,12 @@ async def save_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_ID:
         return
 
-
     if "new_tire" not in context.user_data:
         return
 
-
     photo = update.message.photo[-1].file_id
 
-
     tire = context.user_data["new_tire"]
-
 
     add_tire(
         tire["brand"],
@@ -159,9 +155,7 @@ async def save_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo
     )
 
-
     del context.user_data["new_tire"]
-
 
     await update.message.reply_text(
         "✅ Шина добавлена на склад."
@@ -180,14 +174,12 @@ async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-
     try:
 
         brand = context.args[0]
         size = context.args[1]
         tire_type = context.args[2]
         quantity = int(context.args[3])
-
 
         result = remove_tire(
             brand,
@@ -196,19 +188,14 @@ async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
             quantity
         )
 
-
         if result:
-
             await update.message.reply_text(
                 "🗑 Шина удалена."
             )
-
         else:
-
             await update.message.reply_text(
                 "❌ Такая шина не найдена."
             )
-
 
     except:
 
@@ -216,8 +203,6 @@ async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Пример:\n"
             "/remove Michelin 315/80R22.5 Рулевая 1"
         )
-
-
 # =========================
 # ПОИСК
 # =========================
@@ -225,26 +210,20 @@ async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not context.args:
-
         await update.message.reply_text(
             "Введите размер или марку."
         )
         return
 
-
     query = " ".join(context.args)
-
 
     tires = find_tires(query)
 
-
     if not tires:
-
         await update.message.reply_text(
             "❌ Ничего не найдено."
         )
         return
-
 
     for tire in tires:
 
@@ -256,7 +235,6 @@ async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"📦 Количество: {tire.get('quantity',0)} шт.\n"
             f"💰 Цена: {tire.get('price',0)} руб."
         )
-
 
         if tire.get("photo"):
 
@@ -270,7 +248,6 @@ async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(text)
 
 
-
 # =========================
 # ОТЧЁТ
 # =========================
@@ -282,23 +259,23 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total = 0
     money = 0
 
-
     for tire in tires:
 
-        total += tire.get("quantity",0)
+        total += tire.get("quantity", 0)
 
         money += (
-            tire.get("quantity",0)
+            tire.get("quantity", 0)
             *
-            tire.get("price",0)
+            tire.get("price", 0)
         )
-
 
     await update.message.reply_text(
         "📊 Отчёт склада\n\n"
         f"📦 Всего шин: {total} шт.\n"
         f"💰 Стоимость: {money} руб."
-    )    
+    )
+
+
 # =========================
 # ГЛАВНОЕ МЕНЮ
 # =========================
@@ -353,7 +330,6 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ["235/75 R17.5"]
         ]
 
-
         await update.message.reply_text(
             "Выберите размер:",
             reply_markup=ReplyKeyboardMarkup(
@@ -362,6 +338,12 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         )
 
+        return
+
+
+    # обработка выбора размера
+
+    await quick_search_handler(update, context)
 
 
 # =========================
@@ -371,7 +353,6 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def quick_search_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text.strip()
-
 
     normalized = normalize_size(text)
 
@@ -391,7 +372,6 @@ async def quick_search_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
         context.user_data["search_size"] = normalized
 
-
         keyboard = [
             ["🚛 Рулевая"],
             ["⚙️ Ведущая"],
@@ -399,7 +379,6 @@ async def quick_search_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             ["⛏ Карьерная"],
             ["🌍 Универсальная"]
         ]
-
 
         await update.message.reply_text(
             "Выберите назначение:",
@@ -410,6 +389,8 @@ async def quick_search_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         )
 
         return
+
+
     types = [
         "🚛 Рулевая",
         "⚙️ Ведущая",
@@ -421,10 +402,9 @@ async def quick_search_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
     if text in types:
 
-        tire_size = context.user_data.get("search_size")
+        size = context.user_data.get("search_size")
 
-
-        if not tire_size:
+        if not size:
             await update.message.reply_text(
                 "Сначала выберите размер."
             )
@@ -433,27 +413,29 @@ async def quick_search_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
         tires = get_stock()
 
-        result = []
+        found = []
 
 
         for tire in tires:
 
             if (
-                normalize_size(tire.get("size","")) == tire_size
-                and tire.get("type","").lower() == text.lower().replace("🚛 ","").replace("⚙️ ","").replace("🛞 ","").replace("⛏ ","").replace("🌍 ","")
+                normalize_size(tire.get("size","")) == size
+                and
+                tire.get("type","").lower() == clean_type(text)
             ):
-                result.append(tire)
+                found.append(tire)
 
 
-        if not result:
+        if not found:
 
             await update.message.reply_text(
                 "❌ Такой резины нет на складе."
             )
+
             return
 
 
-        for tire in result:
+        for tire in found:
 
             message = (
                 f"🔍 Найдено:\n\n"
@@ -477,9 +459,8 @@ async def quick_search_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 await update.message.reply_text(message)
 
 
-
 # =========================
-# КНОПКИ + И -
+# КНОПКИ + -
 # =========================
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -488,17 +469,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await query.answer()
 
-
     tires = get_stock()
-
 
     action, index = query.data.split("_")
 
     index = int(index)
-
-
-    if index >= len(tires):
-        return
 
 
     if action == "plus":
@@ -514,41 +489,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     save_stock(tires)
 
-
-    tire = tires[index]
-
-
-    text = (
-        f"📦 {tire['brand']}\n"
-        f"📏 Размер: {tire['size']}\n"
-        f"🛞 Тип: {tire.get('type','')}\n"
-        f"📦 Количество: {tire.get('quantity',0)} шт.\n"
-        f"💰 Цена: {tire.get('price',0)} руб."
+    await query.edit_message_text(
+        "✅ Количество изменено."
     )
-
-
-    keyboard = [[
-        InlineKeyboardButton(
-            "➕",
-            callback_data=f"plus_{index}"
-        ),
-        InlineKeyboardButton(
-            "➖",
-            callback_data=f"minus_{index}"
-        )
-    ]]
-
-
-    if tire.get("photo"):
-
-        await query.edit_message_caption(
-            caption=text,
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-
-    else:
-
-        await query.edit_message_text(
-            text=text,
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
