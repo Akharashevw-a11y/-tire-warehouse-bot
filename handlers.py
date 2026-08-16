@@ -475,6 +475,75 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     index = int(index)
 
+    if index < 0 or index >= len(tires):
+        await query.answer("❌ Шина не найдена.", show_alert=True)
+        return
+
+    if action == "plus":
+
+        tires[index]["quantity"] += 1
+
+    elif action == "minus":
+
+        if tires[index]["quantity"] > 0:
+            tires[index]["quantity"] -= 1
+
+    save_stock(tires)
+
+    tire = tires[index]
+
+    text = (
+        f"📦 {tire['brand']}\n"
+        f"📏 Размер: {tire['size']}\n"
+        f"🛞 Тип: {tire.get('type','')}\n"
+        f"📦 Количество: {tire.get('quantity',0)} шт.\n"
+        f"💰 Цена: {tire.get('price',0)} руб."
+    )
+
+    keyboard = [[
+        InlineKeyboardButton(
+            "➕",
+            callback_data=f"plus_{index}"
+        ),
+        InlineKeyboardButton(
+            "➖",
+            callback_data=f"minus_{index}"
+        )
+    ]]
+
+    markup = InlineKeyboardMarkup(keyboard)
+
+    if tire.get("photo"):
+
+        try:
+            await query.edit_message_caption(
+                caption=text,
+                reply_markup=markup
+            )
+        except Exception:
+            await query.message.reply_photo(
+                photo=tire["photo"],
+                caption=text,
+                reply_markup=markup
+            )
+
+    else:
+
+        await query.edit_message_text(
+            text,
+            reply_markup=markup
+        )
+
+    query = update.callback_query
+
+    await query.answer()
+
+    tires = get_stock()
+
+    action, index = query.data.split("_")
+
+    index = int(index)
+
 
     if action == "plus":
 
