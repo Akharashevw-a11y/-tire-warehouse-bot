@@ -37,17 +37,20 @@ TIRE_TYPES = {
 
 
 def normalize_size(text):
-    return "".join(text.lower().split()).replace("-", "")
+    text = str(text).lower().replace("ё", "е")
+    return "".join(
+        char for char in text
+        if not char.isspace() and char not in "-–—"
+    )
 
 
 def clean_type(text):
-    text = text.lower().strip()
-    for label, value in TIRE_TYPES.items():
-        if text == label:
-            return value
-    return text.replace("🚛", "").replace("⚙️", "").replace(
-        "🛞", ""
-    ).replace("⛏", "").replace("🌍", "").strip()
+    text = str(text).lower().strip().replace("ё", "е")
+
+    for emoji in ("🚛", "⚙️", "🛞", "⛏", "🌍"):
+        text = text.replace(emoji, "")
+
+    return " ".join(text.split())
 
 
 def tire_text(tire, title="📦"):
@@ -78,7 +81,10 @@ async def send_tire(update, tire, index=None, title="📦"):
             reply_markup=markup,
         )
     else:
-        await update.message.reply_text(text, reply_markup=markup)
+        await update.message.reply_text(
+            text,
+            reply_markup=markup,
+        )
 
 
 async def stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -122,9 +128,9 @@ async def add(update: Update, context: ContextTypes.DEFAULT_TYPE):
         }
 
         await update.message.reply_text(
-            "📸 Теперь отправьте фото шины.\n"
-            "Для сохранения записи требуется отправить фото."
+            "📸 Теперь отправьте фото шины."
         )
+
     except ValueError:
         await update.message.reply_text(
             "❌ Проверьте количество и цену.\n"
@@ -137,6 +143,12 @@ async def save_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if "new_tire" not in context.user_data:
+        return
+
+    if not update.message.photo:
+        await update.message.reply_text(
+            "❌ Отправьте фотографию шины."
+        )
         return
 
     photo = update.message.photo[-1].file_id
@@ -178,16 +190,21 @@ async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await update.message.reply_text(
             "🗑 Количество обновлено."
-            if result else
-            "❌ Шина не найдена или количество указано неверно."
+            if result
+            else "❌ Шина не найдена или количество указано неверно."
         )
+
     except ValueError:
-        await update.message.reply_text("❌ Количество должно быть числом.")
+        await update.message.reply_text(
+            "❌ Количество должно быть числом."
+        )
 
 
 async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Введите марку, размер или назначение.")
+        await update.message.reply_text(
+            "Введите марку, размер или назначение."
+        )
         return
 
     tires = find_tires(" ".join(context.args))
@@ -204,7 +221,8 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
     tires = get_stock()
     total = sum(t.get("quantity", 0) for t in tires)
     money = sum(
-        t.get("quantity", 0) * t.get("price", 0) for t in tires
+        t.get("quantity", 0) * t.get("price", 0)
+        for t in tires
     )
 
     await update.message.reply_text(
@@ -223,7 +241,9 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if text == "🔍 Поиск":
         context.user_data["waiting_search"] = True
-        await update.message.reply_text("Введите марку или размер.")
+        await update.message.reply_text(
+            "Введите марку, размер или назначение."
+        )
         return
 
     if text == "➕ Добавить":
@@ -252,9 +272,13 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ["215/75 R17.5"],
             ["235/75 R17.5"],
         ]
+
         await update.message.reply_text(
             "Выберите размер:",
-            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard,
+                resize_keyboard=True,
+            ),
         )
         return
 
@@ -262,6 +286,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if normalized in SIZES:
         context.user_data["search_size"] = normalized
+
         keyboard = [
             ["🚛 Рулевая"],
             ["⚙️ Ведущая"],
@@ -269,19 +294,27 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ["⛏ Карьерная"],
             ["🌍 Универсальная"],
         ]
+
         await update.message.reply_text(
             "Выберите назначение:",
-            reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard,
+                resize_keyboard=True,
+            ),
         )
         return
 
-    if text in TIRE_TYPES:
+    tire_type = clean_type(text)
+
+    if tire_type in TIRE_TYPES.values():
         size = context.user_data.get("search_size")
+
         if not size:
-            await update.message.reply_text("Сначала выберите размер.")
+            await update.message.reply_text(
+                "Сначала выберите размер через 🔥 Быстрый поиск."
+            )
             return
 
-        tire_type = TIRE_TYPES[text]
         found = [
             tire for tire in get_stock()
             if normalize_size(tire.get("size", "")) == size
@@ -289,7 +322,9 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
 
         if not found:
-            await update.message.reply_text("❌ Такой резины нет на складе.")
+            await update.message.reply_text(
+                "❌ Такой резины нет на складе."
+            )
             return
 
         for tire in found:
@@ -298,6 +333,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if context.user_data.pop("waiting_search", False):
         tires = find_tires(text)
+
         if not tires:
             await update.message.reply_text("❌ Ничего не найдено.")
         else:
@@ -313,7 +349,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         action, index_text = query.data.split("_", 1)
         index = int(index_text)
     except (ValueError, AttributeError):
-        await query.message.reply_text("❌ Не удалось обработать кнопку.")
+        await query.message.reply_text(
+            "❌ Не удалось обработать кнопку."
+        )
         return
 
     tires = get_stock()
@@ -328,6 +366,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if action == "plus":
         tire["quantity"] = tire.get("quantity", 0) + 1
+
     elif action == "minus":
         if tire.get("quantity", 0) > 1:
             tire["quantity"] -= 1
@@ -354,8 +393,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 text=text,
                 reply_markup=tire_keyboard(index),
             )
+
     except Exception:
         await query.message.reply_text(
-            "✅ Количество сохранено: "
-            f"{tire['quantity']} шт."
+            f"✅ Количество сохранено: {tire['quantity']} шт."
         )
