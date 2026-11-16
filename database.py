@@ -1,66 +1,69 @@
 
-import json
 import os
-import tempfile
+from supabase import create_client
 
-FILE = "stock.json"
+_client = None
+
+
+def get_client():
+    global _client
+
+    if _client is None:
+        url = os.getenv("SUPABASE_URL")
+        key = os.getenv("SUPABASE_KEY")
+
+        if not url or not key:
+            raise RuntimeError(
+                "Не найдены SUPABASE_URL или SUPABASE_KEY в GitHub Secrets"
+            )
+
+        _client = create_client(url, key)
+
+    return _client
 
 
 def load_stock():
-    if not os.path.exists(FILE):
-        return []
+    response = (
+        get_client()
+        .table("TRS")
+        .select("*")
+        .order("id")
+        .execute()
+    )
 
-    try:
-        with open(FILE, "r", encoding="utf-8") as f:
-            stock = json.load(f)
-    except (json.JSONDecodeError, OSError) as e:
-        raise RuntimeError(
-            f"Не удалось прочитать {FILE}. "
-            "Файл не изменён, чтобы защитить данные."
-        ) from e
-
-    if not isinstance(stock, list):
-        raise RuntimeError(
-            f"Файл {FILE} содержит неверный формат. "
-            "Файл не изменён."
-        )
-
-    for tire in stock:
-        if not isinstance(tire, dict):
-            raise RuntimeError("В stock.json обнаружена неверная запись.")
-
-        tire.setdefault("photo", None)
-        tire.setdefault("price", 0)
-        tire.setdefault("type", "")
-        tire.setdefault("quantity", 0)
-
-    return stock
+    return [
+        {
+            "id": tire["id"],
+            "brand": tire.get("brand", ""),
+            "size": tire.get("size", ""),
+            "type": tire.get("type", ""),
+            "quantity": tire.get("quantity", 0),
+            "price": tire.get("price", 0),
+            "photo": tire.get("photo"),
+        }
+        for tire in response.data
+    ]
 
 
 def save_stock(stock):
-    directory = os.path.dirname(os.path.abspath(FILE))
-    fd, temp_file = tempfile.mkstemp(
-        prefix="stock_",
-        suffix=".tmp",
-        dir=directory
-    )
+    client = get_client()
 
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(
-                stock,
-                f,
-                ensure_ascii=False,
-                indent=4
-            )
-            f.flush()
-            os.fsync(f.fileno())
+    for tire in stock:
+        data = {
+            "brand": tire.get("brand", ""),
+            "size": tire.get("size", ""),
+            "type": tire.get("type", ""),
+            "quantity": tire.get("quantity", 0),
+            "price": tire.get("price", 0),
+            "photo": tire.get("photo"),
+        }
 
-        os.replace(temp_file, FILE)
-
-    finally:
-        if os.path.exists(temp_file):
-            os.remove(temp_file)
+        if tire.get("id") is not None:
+            client.table("TRS").update(data).eq(
+                "id", tire["id"]
+            ).execute()
+        else:
+            client.table("TRS").insert(data).execute()
 
 
 def add_tire(
@@ -71,18 +74,14 @@ def add_tire(
     price,
     photo=None
 ):
-    stock = load_stock()
-
-    stock.append({
+    get_client().table("TRS").insert({
         "brand": brand,
         "size": size,
         "type": tire_type,
         "quantity": quantity,
         "price": price,
-        "photo": photo
-    })
-
-    save_stock(stock)
+        "photo": photo,
+    }).execute()
 
 
 def get_stock():
@@ -94,21 +93,25 @@ def remove_tire(brand, size, tire_type, quantity):
 
     for tire in stock:
         if (
-            tire.get("brand", "").casefold() == brand.casefold()
-            and tire.get("size", "").replace(" ", "").casefold()
+            tire["brand"].casefold() == brand.casefold()
+            and tire["size"].replace(" ", "").casefold()
             == size.replace(" ", "").casefold()
-            and tire.get("type", "").casefold()
-            == tire_type.casefold()
+            and tire["type"].casefold() == tire_type.casefold()
         ):
-            if quantity <= 0 or quantity > tire.get("quantity", 0):
+            if quantity <= 0 or quantity > tire["quantity"]:
                 return False
 
-            tire["quantity"] -= quantity
+            new_quantity = tire["quantity"] - quantity
 
-            if tire["quantity"] == 0:
-                stock.remove(tire)
+            if new_quantity == 0:
+                get_client().table("TRS").delete().eq(
+                    "id", tire["id"]
+                ).execute()
+            else:
+                get_client().table("TRS").update({
+                    "quantity": new_quantity
+                }).eq("id", tire["id"]).execute()
 
-            save_stock(stock)
             return True
 
     return False
@@ -117,17 +120,14 @@ def remove_tire(brand, size, tire_type, quantity):
 def find_tires(query):
     stock = load_stock()
     words = query.casefold().split()
-
     result = []
 
     for tire in stock:
         text = (
-            f"{tire.get('brand', '')} "
-            f"{tire.get('size', '')} "
-            f"{tire.get('type', '')}"
-        ).casefold()
-
-        text = text.replace(" ", "")
+            f"{tire['brand']} "
+            f"{tire['size']} "
+            f"{tire['type']}"
+        ).casefold().replace(" ", "")
 
         if all(word.replace(" ", "") in text for word in words):
             result.append(tire)
